@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -122,7 +122,7 @@ namespace ANFChallenge
 
                         value = string.Empty;
                         break;
-                    case char _char when char.IsLetter(_char) || char.IsNumber(_char) || _char == '"' || _char == '.' || _char == ',' || _char == '[' || _char == ']':
+                    case char _char when _char.IsViableToBeParsed():
                         if (varNameFound)
                             varName += _char;
                         if (!varNameFound)
