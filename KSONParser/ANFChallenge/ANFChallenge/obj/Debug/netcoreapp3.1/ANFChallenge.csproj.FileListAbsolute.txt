@@ -1,0 +1,12 @@
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/bin/Debug/netcoreapp3.1/ANFChallenge.deps.json
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/bin/Debug/netcoreapp3.1/ANFChallenge.runtimeconfig.json
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/bin/Debug/netcoreapp3.1/ANFChallenge.runtimeconfig.dev.json
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/bin/Debug/netcoreapp3.1/ANFChallenge.dll
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/bin/Debug/netcoreapp3.1/ANFChallenge.pdb
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/obj/Debug/netcoreapp3.1/ANFChallenge.csprojAssemblyReference.cache
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/obj/Debug/netcoreapp3.1/ANFChallenge.AssemblyInfoInputs.cache
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/obj/Debug/netcoreapp3.1/ANFChallenge.AssemblyInfo.cs
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/obj/Debug/netcoreapp3.1/ANFChallenge.csproj.CoreCompileInputs.cache
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/obj/Debug/netcoreapp3.1/ANFChallenge.dll
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/obj/Debug/netcoreapp3.1/ANFChallenge.pdb
+/Users/kunalkashyap/Projects/ANFChallenge/ANFChallenge/obj/Debug/netcoreapp3.1/ANFChallenge.genruntimeconfig.cache
