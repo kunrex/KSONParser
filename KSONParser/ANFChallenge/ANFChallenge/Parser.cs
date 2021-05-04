@@ -115,7 +115,7 @@ namespace ANFChallenge
                                 }
                                 else if (_type == typeof(bool))
                                 {
-                                    field.SetValue(t, value != "TRUE");
+                                    field.SetValue(t, value == "TRUE");
                                 }
                             }
                         }
