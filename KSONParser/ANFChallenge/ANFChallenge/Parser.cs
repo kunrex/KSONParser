@@ -1,22 +1,26 @@
 using System;
 using System.Reflection;
 using System.Collections.Generic;
+using HelpfulExtensions;
+using System.Collections;
 
 namespace ANFChallenge
 {
     public class KsonParser
     {
+        const string NULL = "NULL";
+        const string SPACE = "   ";
+
         public static object FromKson<T>(string ksonString)
         {
             Console.WriteLine("Converting to class instance\n");
 
             Type type = typeof(T);
 
-            var t = GetInstance(type);
+            var instance = Activator.CreateInstance(type);
 
             bool varNameFound = false;
-            string varName = string.Empty;
-            string value = string.Empty;
+            string varName = string.Empty, value = string.Empty;
 
             for(int i =0;i<ksonString.Length;i++)
             {
@@ -30,22 +34,22 @@ namespace ANFChallenge
                             varName = string.Empty;
                         break;
                     case ';':
+                        FieldInfo field = instance.GetType().GetField(varName);
 
-                        FieldInfo field = t.GetType().GetField(varName);
-
-                        if (value == "NULL")
+                        if (value == NULL)
                         {
-                            field.SetValue(t, null);
+                            field.SetValue(instance, null);
                         }
                         else
                         {
-                            Type _type = field.FieldType;
-                            int integer; float floatingPoint;
+                            Type fieldType = field.FieldType;
 
                             if (field.FieldType.IsArray)
                             {
+                                Type listType = typeof(List<>).MakeGenericType(fieldType.GetElementType());
+                                dynamic list = Activator.CreateInstance(listType);
+
                                 string currentValue = string.Empty;
-                                List<string> listS = new List<string>(); List<int> listI = new List<int>(); List<float> listF = new List<float>(); List<bool> listB = new List<bool>();
 
                                 for (int k = 0; k < value.Length; k++)
                                 {
@@ -59,64 +63,54 @@ namespace ANFChallenge
                                             currentValue += value[k];
                                             break;
                                         case char _charecter when _charecter == ',' || _charecter == ']':
-
                                             switch (field.FieldType)
                                             {
-                                                case Type TYPE when TYPE == typeof(string[]):
-                                                    listS.Add(currentValue);
+                                                case Type dataType when dataType == typeof(string[]):
+                                                    list.Add(currentValue);
                                                     break;
-                                                case Type TYPE when TYPE == typeof(int[]):
-                                                    listI.Add(int.Parse(currentValue));
+                                                case Type dataType when dataType == typeof(int[]):
+                                                    list.Add(int.Parse(currentValue));
                                                     break;
-                                                case Type TYPE when TYPE == typeof(float[]):
-                                                    listF.Add(float.Parse(currentValue));
+                                                case Type dataType when dataType == typeof(float[]):
+                                                    list.Add(float.Parse(currentValue));
                                                     break;
-                                                case Type TYPE when TYPE == typeof(bool[]):
-                                                    listB.Add(currentValue == "TRUE");
+                                                case Type dataType when dataType == typeof(bool[]):
+                                                    list.Add(currentValue == "TRUE");
                                                     break;
+                                                case Type dataType when dataType == typeof(bool[]):
+                                                    list.Add(currentValue.ToChar());
+                                                    break;
+                                                default:
+                                                    throw new Exception("Invalid Type To Deserialise");
                                             }
 
                                             currentValue = string.Empty;
                                             break;
                                     }
 
-                                    switch (field.FieldType)
-                                    {
-                                        case Type TYPE when TYPE == typeof(string[]):
-                                            field.SetValue(t, listS.ToArray());
-                                            break;
-                                        case Type TYPE when TYPE == typeof(int[]):
-                                            field.SetValue(t, listI.ToArray());
-                                            break;
-                                        case Type TYPE when TYPE == typeof(float[]):
-                                            field.SetValue(t, listF.ToArray());
-                                            break;
-                                        case Type TYPE when TYPE == typeof(bool[]):
-                                            field.SetValue(t, listB.ToArray());
-                                            break;
-                                    }
+                                    field.SetValue(instance, list.ToArray());
                                 }
                             }
                             else
                             {
-                                if (_type == typeof(int))
+                                if (fieldType == typeof(int))
                                 {
-                                    integer = int.Parse(value);
-                                    field.SetValue(t, integer);
+                                    int number = int.Parse(value);
+                                    field.SetValue(instance, number);
                                 }
-                                else if (_type == typeof(float))
+                                else if (fieldType == typeof(float))
                                 {
-                                    floatingPoint = float.Parse(value);
-                                    field.SetValue(t, floatingPoint);
+                                    float number = float.Parse(value);
+                                    field.SetValue(instance, number);
                                 }
-                                else if (_type == typeof(string))
-                                {
-                                    field.SetValue(t, value);
-                                }
-                                else if (_type == typeof(bool))
-                                {
-                                    field.SetValue(t, value == "TRUE");
-                                }
+                                else if (fieldType == typeof(string))
+                                    field.SetValue(instance, value);
+                                else if (fieldType == typeof(bool))
+                                    field.SetValue(instance, value == "TRUE");
+                                else if(fieldType == typeof(char))
+                                    field.SetValue(instance, value.ToChar());
+                                else
+                                    throw new Exception("Invalid Type To Deserialise");
                             }
                         }
 
@@ -132,13 +126,7 @@ namespace ANFChallenge
             }
 
             Console.WriteLine("Done\n");
-            return t;
-
-            //the first use of a local method
-            object GetInstance(Type type)
-            {
-                return Activator.CreateInstance(type);
-            }
+            return instance;
         }
 
         public static string ToKson(object instance)
@@ -152,87 +140,61 @@ namespace ANFChallenge
             {
                 if (fieldValues[i].GetValue(instance) == null)
                 {
-                    parsed += $"   \"{fieldValues[i].Name}\":NULL;\n";
+                    parsed += $"{SPACE}\"{fieldValues[i].Name}\":{NULL};\n";
                     continue;
                 }
 
                 if (!fieldValues[i].FieldType.IsArray)
                 {
-                    
-                    if (fieldValues[i].FieldType == typeof(bool))
-                        parsed += $"   \"{fieldValues[i].Name}\":{((bool)fieldValues[i].GetValue(instance)==true).ToString().ToUpper()};\n"; 
-                    else
-                        parsed += $"   \"{fieldValues[i].Name}\":{fieldValues[i].GetValue(instance)};\n";
+                    switch(fieldValues[i].FieldType)
+                    {
+                        case var dataType when dataType == typeof(bool):
+                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{((bool)fieldValues[i].GetValue(instance) == true).ToString().ToUpper()};\n";
+                            break;
+                        case var dataType when dataType == typeof(int) || dataType == typeof(float) || dataType == typeof(string) || dataType == typeof(char):
+                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetValue(instance)};\n";
+                            break;
+                    }  
                 }
                 else
                 {
-                    if(fieldValues[i].FieldType == typeof(int[]))
+                    dynamic arr = fieldValues[i].GetValue(instance);
+                    string values = "[";
+
+                    for (int k = 0; k < arr.Length; k++)
                     {
-                        int[] arr = (int[])fieldValues[i].GetValue(instance);
-                        string values = "[";
-
-                        for(int k =0;k<arr.Length;k++)
-                        {
-                            if(k + 1 != arr.Length)
-                                values += $"{arr[k]},";
-                            else
-                                values += $"{arr[k]}";
-                        }
-                        values += "]";
-
-                        parsed += $"\n   \"{fieldValues[i].Name}\":{values};\n";
-                    }
-                    else if(fieldValues[i].FieldType == typeof(string[]))
-                    {
-                        string[] arr = (string[])fieldValues[i].GetValue(instance);
-                        string values = "[";
-
-                        for (int k = 0; k < arr.Length; k++)
+                        if (fieldValues[i].FieldType == typeof(string[]) || fieldValues[i].FieldType == typeof(char[]))
                         {
                             if (k + 1 != arr.Length)
                                 values += $"'{arr[k]}',";
                             else
                                 values += $"'{arr[k]}'";
                         }
-                        values += "]";
-
-                        parsed += $"\n   \"{fieldValues[i].Name}\":{values};\n";
-                    }
-                    else if (fieldValues[i].FieldType == typeof(float[]))
-                    {
-                        float[] arr = (float[])fieldValues[i].GetValue(instance);
-                        string values = "[";
-
-                        for (int k = 0; k < arr.Length; k++)
-                        {
-                            if (k + 1 != arr.Length)
-                                values += $"{arr[k]},";
-                            else
-                                values += $"{arr[k]}";
-                        }
-                        values += "]";
-
-                        parsed += $"\n   \"{fieldValues[i].Name}\":{values};\n";
-                    }
-                    else if (fieldValues[i].FieldType == typeof(bool[]))
-                    {
-                        bool[] arr = (bool[])fieldValues[i].GetValue(instance);
-                        string values = "[";
-
-                        for (int k = 0; k < arr.Length; k++)
+                        else if (fieldValues[i].FieldType == typeof(bool[]))
                         {
                             if (k + 1 != arr.Length)
                                 values += $"{arr[k].ToString().ToUpper()},";
                             else
                                 values += $"{arr[k].ToString().ToUpper()}";
                         }
-                        values += "]";
-
-                        parsed += $"\n   \"{fieldValues[i].Name}\":{values};\n";
+                        else if(fieldValues[i].FieldType == typeof(int[]) || fieldValues[i].FieldType == typeof(float[]))
+                        {
+                            if (k + 1 != arr.Length)
+                                values += $"{arr[k]},";
+                            else
+                                values += $"{arr[k]}";
+                        }
+                        else
+                            throw new Exception("Invalid Type To Serialise");
                     }
+                    values += "]";
+
+                    parsed += $"\n{SPACE}\"{fieldValues[i].Name}\":{values};\n";
                 }
             }
             parsed += "}\n";
+
+            Console.WriteLine("Done\n");
 
             return parsed;
         }
