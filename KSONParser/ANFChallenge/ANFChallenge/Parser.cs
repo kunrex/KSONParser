@@ -33,29 +33,29 @@ namespace KSON
 
             Type type = typeof(T);
 
-            var instance = Activator.CreateInstance(type);
+            var instance = Activator.CreateInstance(type);//create instance of required type
 
             bool varNameFound = false;
             string varName = string.Empty, value = string.Empty;
 
-            for(int i =0;i<ksonString.Length;i++)
+            for(int i =0;i<ksonString.Length;i++)//loop through all the characters in the entered string
             {
                 switch (ksonString[i])
                 {
-                    case char k when k == '{' || k == '}':
+                    case char k when k == '{' || k == '}'://ignore
                         break;
-                    case '"':
+                    case '"'://checks wether or not a variable name is being detected, if not set varName to ""
                         varNameFound = !varNameFound;
                         if (varNameFound)
                             varName = string.Empty;
                         break;
-                    case ';':
+                    case ';'://a complete field with variable name + value has been found, parse the value and change it in the created instance and reset "varName" and "value"
                         FieldInfo field = instance.GetType().GetField(varName);
 
-                        if (!field.FieldType.IsValidType(true))
+                        if (!field.FieldType.IsValidType(true))//not a deserialisable type
                             throw new Exception("Invalide Type To Deserialise");
 
-                        if (value == NULL)
+                        if (value == NULL)//the value is null
                         {
                             field.SetValue(instance, null);
                         }
@@ -63,25 +63,25 @@ namespace KSON
                         {
                             Type fieldType = field.FieldType;
 
-                            if (field.FieldType.IsArray)
+                            if (field.FieldType.IsArray)//type is array
                             {
                                 Type listType = typeof(List<>).MakeGenericType(fieldType.GetElementType());
-                                dynamic list = Activator.CreateInstance(listType);
+                                dynamic list = Activator.CreateInstance(listType);//create a list of elemant type of the variable being parsed
 
                                 string currentValue = string.Empty;
 
-                                for (int k = 0; k < value.Length; k++)
+                                for (int k = 0; k < value.Length; k++)//loop through the "value" string to find the elemants of the array
                                 {
                                     switch (value[k])
                                     {
-                                        case '[':
+                                        case '['://ignore
                                         case ' ':
                                             break;
 
-                                        case char _charecter when _charecter.IsValidToBeDeserialised_Array():
+                                        case char _charecter when _charecter.IsValidToBeDeserialised_Array()://elemant
                                             currentValue += value[k];
                                             break;
-                                        case char _charecter when _charecter.DeterminesEndOfSerialisedArray():
+                                        case char _charecter when _charecter.DeterminesEndOfSerialisedArray()://end of the elemant, depending on the data type of the field, add respective values
                                             switch (field.FieldType)
                                             {
                                                 case Type dataType when dataType == typeof(string[]):
@@ -101,16 +101,16 @@ namespace KSON
                                                     break;
                                             }
 
-                                            currentValue = string.Empty;
+                                            currentValue = string.Empty;//reset the string values
                                             break;
                                     }
 
-                                    field.SetValue(instance, list.ToArray());
+                                    field.SetValue(instance, list.ToArray());//assign the elemants to the variable in the created instance of type T
                                 }
                             }
                             else
                             {
-                                if (fieldType == typeof(int))
+                                if (fieldType == typeof(int))//depending on the variable type, assign the respective values
                                 {
                                     int number = int.Parse(value);
                                     field.SetValue(instance, number);
@@ -131,10 +131,10 @@ namespace KSON
 
                         value = string.Empty;
                         break;
-                    case char _char when _char.IsViableToBeSerialised():
-                        if (varNameFound)
+                    case char _char when _char.IsViableToBeSerialised()://character can be deserialised 
+                        if (varNameFound)//if a variable name is being read
                             varName += _char;
-                        if (!varNameFound)
+                        else//variable values are being read
                             value += _char;
                         break;
                 }
@@ -164,26 +164,26 @@ namespace KSON
         {
             Console.WriteLine("Converting to Kson text\n");
 
-            FieldInfo[] fieldValues = instance.GetType().GetFields();
+            FieldInfo[] fieldValues = instance.GetType().GetFields();//all the fields in the class
 
             string parsed = "{\n";
-            for(int i = 0;i < fieldValues.Length;i++)
+            for(int i = 0;i < fieldValues.Length;i++)//loop through all the fields
             {
-                if(!fieldValues[i].FieldType.IsValidType(true))
+                if(!fieldValues[i].FieldType.IsValidType(true))//checks if field can be serialised or not
                     throw new Exception("Invalide Type To Serialise");
 
-                if (fieldValues[i].GetValue(instance) == null)
+                if (fieldValues[i].GetValue(instance) == null)//value of null 
                 {
                     parsed += $"{SPACE}\"{fieldValues[i].Name}\":{NULL};\n";
                     continue;
                 }
 
-                if (fieldValues[i].FieldType.IsArray)
+                if (fieldValues[i].FieldType.IsArray)//is array
                 {
-                    dynamic arr = fieldValues[i].GetValue(instance);
+                    dynamic arr = fieldValues[i].GetValue(instance);//create a dynmaic array with the elemants
                     string values = "[";
 
-                    for (int k = 0; k < arr.Length; k++)
+                    for (int k = 0; k < arr.Length; k++)//loop through all the elamants and depending on the type, add them to the "value" string
                     {
                         if (fieldValues[i].FieldType == typeof(string[]) || fieldValues[i].FieldType == typeof(char[]))
                         {
@@ -209,17 +209,17 @@ namespace KSON
                     }
                     values += "]";
 
-                    parsed += $"\n{SPACE}\"{fieldValues[i].Name}\":{values};\n";
+                    parsed += $"\n{SPACE}\"{fieldValues[i].Name}\":{values};\n";//add the value and variable to the parsed string
                 }
                 else
                 {
                     switch (fieldValues[i].FieldType)
                     {
-                        case var dataType when dataType == typeof(bool):
-                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{((bool)fieldValues[i].GetValue(instance) == true).ToString().ToUpper()};\n";
+                        case var dataType when dataType == typeof(bool)://if its a bool
+                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{((bool)fieldValues[i].GetValue(instance) == true).ToString().ToUpper()};\n";//add the value and variable to the parsed string
                             break;
                         case var dataType when dataType.IsValidType():
-                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetValue(instance)};\n";
+                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetValue(instance)};\n";//add the value and variable to the parsed string
                             break;
                     }
                 }
