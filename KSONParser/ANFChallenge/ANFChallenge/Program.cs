@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 
-namespace ANFChallenge
+namespace KSON
 {
     class Program
     {
@@ -10,13 +10,11 @@ namespace ANFChallenge
 
             string parsed_1 = KsonParser.ToKson(testClass_1);
             Console.WriteLine(parsed_1);
-            Console.WriteLine("Done\n");
 
             var testClass_2 = KsonParser.FromKson<TestClass>(parsed_1);
 
             string parsed_2 = KsonParser.ToKson(testClass_2);
             Console.WriteLine(parsed_2);
-            Console.WriteLine("Done\n");
         }
     }
 }
