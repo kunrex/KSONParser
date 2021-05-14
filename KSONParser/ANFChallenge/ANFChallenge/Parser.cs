@@ -96,7 +96,7 @@ namespace KSON
                                                 case Type dataType when dataType == typeof(bool[]):
                                                     list.Add(currentValue == "TRUE");
                                                     break;
-                                                case Type dataType when dataType == typeof(bool[]):
+                                                case Type dataType when dataType == typeof(char[]):
                                                     list.Add(currentValue.ToChar());
                                                     break;
                                             }
