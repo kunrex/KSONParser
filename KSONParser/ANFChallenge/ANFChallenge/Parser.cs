@@ -212,16 +212,7 @@ namespace KSON
                     parsed += $"\n{SPACE}\"{fieldValues[i].Name}\":{values};\n";//add the value and variable to the parsed string
                 }
                 else
-                {
-                    switch (fieldValues[i].FieldType)
-                    {
-                        case var dataType when dataType == typeof(bool)://if its a bool
-                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{((bool)fieldValues[i].GetValue(instance) == true).ToString().ToUpper()};\n";//add the value and variable to the parsed string
-                            break;
-                        case var dataType when dataType.IsValidType():
-                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetValue(instance)};\n";//add the value and variable to the parsed string
-                            break;
-                    }
+                    parsed += $"{SPACE}\"{fieldValues[i].Name}\":{(fieldValues[i].FieldType == typeof(bool) ? fieldValues[i].GetValue(instance).ToString().ToUpper() : fieldValues[i].GetValue(instance))};\n";//add the value and variable to the parsed string
                 }
             }
             parsed += "}\n";
