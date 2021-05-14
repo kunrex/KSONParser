@@ -81,7 +81,7 @@ namespace KSON
                                         case char _charecter when _charecter.IsValidToBeDeserialised_Array()://elemant
                                             currentValue += value[k];
                                             break;
-                                        case char _charecter when _charecter.DeterminesEndOfSerialisedArray()://end of the elemant, depending on the data type of the field, add respective values
+                                        case char _charecter when _charecter.DeterminesEndOfSerialisedArray()://end of the elemant, add the values to the list depending on the data type of the field, add respective values
                                             switch (field.FieldType)
                                             {
                                                 case Type dataType when dataType == typeof(string[]):
