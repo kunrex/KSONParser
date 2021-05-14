@@ -11,6 +11,22 @@ namespace ANFChallenge
         const string NULL = "NULL";
         const string SPACE = "   ";
 
+        /*
+        should convert ->
+        {
+            "x":0;
+            "y":hello;
+        }
+
+        to ->
+
+        class myClass
+        {
+            int x = 0;
+            string y = "hello";
+        }
+        */
+
         public static object FromKson<T>(string ksonString)
         {
             Console.WriteLine("Converting to class instance\n");
@@ -36,6 +52,9 @@ namespace ANFChallenge
                     case ';':
                         FieldInfo field = instance.GetType().GetField(varName);
 
+                        if (!field.FieldType.IsValidType(true))
+                            throw new Exception("Invalide Type To Deserialise");
+
                         if (value == NULL)
                         {
                             field.SetValue(instance, null);
@@ -59,10 +78,10 @@ namespace ANFChallenge
                                         case ' ':
                                             break;
 
-                                        case char _charecter when char.IsLetter(_charecter) || char.IsNumber(_charecter) || _charecter == '.':
+                                        case char _charecter when _charecter.IsValidToBeDeserialised_Array():
                                             currentValue += value[k];
                                             break;
-                                        case char _charecter when _charecter == ',' || _charecter == ']':
+                                        case char _charecter when _charecter.DeterminesEndOfSerialisedArray():
                                             switch (field.FieldType)
                                             {
                                                 case Type dataType when dataType == typeof(string[]):
@@ -80,8 +99,6 @@ namespace ANFChallenge
                                                 case Type dataType when dataType == typeof(bool[]):
                                                     list.Add(currentValue.ToChar());
                                                     break;
-                                                default:
-                                                    throw new Exception("Invalid Type To Deserialise");
                                             }
 
                                             currentValue = string.Empty;
@@ -109,14 +126,12 @@ namespace ANFChallenge
                                     field.SetValue(instance, value == "TRUE");
                                 else if(fieldType == typeof(char))
                                     field.SetValue(instance, value.ToChar());
-                                else
-                                    throw new Exception("Invalid Type To Deserialise");
                             }
                         }
 
                         value = string.Empty;
                         break;
-                    case char _char when _char.IsViableToBeParsed():
+                    case char _char when _char.IsViableToBeSerialised():
                         if (varNameFound)
                             varName += _char;
                         if (!varNameFound)
@@ -129,6 +144,22 @@ namespace ANFChallenge
             return instance;
         }
 
+        /*
+        should convert ->
+
+        class myClass
+        {
+            int x = 0;
+            string y = "hello";
+        }
+
+        to ->
+
+        {
+            "x":0;
+            "y":hello;
+        }
+        */
         public static string ToKson(object instance)
         {
             Console.WriteLine("Converting to Kson text\n");
@@ -138,25 +169,16 @@ namespace ANFChallenge
             string parsed = "{\n";
             for(int i = 0;i < fieldValues.Length;i++)
             {
+                if(!fieldValues[i].FieldType.IsValidType(true))
+                    throw new Exception("Invalide Type To Serialise");
+
                 if (fieldValues[i].GetValue(instance) == null)
                 {
                     parsed += $"{SPACE}\"{fieldValues[i].Name}\":{NULL};\n";
                     continue;
                 }
 
-                if (!fieldValues[i].FieldType.IsArray)
-                {
-                    switch(fieldValues[i].FieldType)
-                    {
-                        case var dataType when dataType == typeof(bool):
-                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{((bool)fieldValues[i].GetValue(instance) == true).ToString().ToUpper()};\n";
-                            break;
-                        case var dataType when dataType == typeof(int) || dataType == typeof(float) || dataType == typeof(string) || dataType == typeof(char):
-                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetValue(instance)};\n";
-                            break;
-                    }  
-                }
-                else
+                if (fieldValues[i].FieldType.IsArray)
                 {
                     dynamic arr = fieldValues[i].GetValue(instance);
                     string values = "[";
@@ -177,19 +199,29 @@ namespace ANFChallenge
                             else
                                 values += $"{arr[k].ToString().ToUpper()}";
                         }
-                        else if(fieldValues[i].FieldType == typeof(int[]) || fieldValues[i].FieldType == typeof(float[]))
+                        else if (fieldValues[i].FieldType == typeof(int[]) || fieldValues[i].FieldType == typeof(float[]))
                         {
                             if (k + 1 != arr.Length)
                                 values += $"{arr[k]},";
                             else
                                 values += $"{arr[k]}";
                         }
-                        else
-                            throw new Exception("Invalid Type To Serialise");
                     }
                     values += "]";
 
                     parsed += $"\n{SPACE}\"{fieldValues[i].Name}\":{values};\n";
+                }
+                else
+                {
+                    switch (fieldValues[i].FieldType)
+                    {
+                        case var dataType when dataType == typeof(bool):
+                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{((bool)fieldValues[i].GetValue(instance) == true).ToString().ToUpper()};\n";
+                            break;
+                        case var dataType when dataType.IsValidType():
+                            parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetValue(instance)};\n";
+                            break;
+                    }
                 }
             }
             parsed += "}\n";
