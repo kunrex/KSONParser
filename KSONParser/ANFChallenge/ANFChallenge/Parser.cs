@@ -79,7 +79,7 @@ namespace KSON
                                             currentValue += value[k];
                                             break;
                                         case char _charecter when _charecter.DeterminesEndOfSerialisedArray()://end of the elemant, depending on the data type of the field, add respective values
-                                            values.Add(field.GetCustomAttribute<Serialisable>().Deserialise(currentValue, fieldType.GetElementType()));//adds the deserialised value to the list
+                                            values.Add(type.GetCustomAttribute<Serialisable>().Deserialise(currentValue, fieldType.GetElementType()));//adds the deserialised value to the list
                                             currentValue = string.Empty;//reset the string values
                                             break;
                                     }
@@ -88,7 +88,7 @@ namespace KSON
                                 }
                             }
                             else
-                                field.SetValue(instance, field.GetCustomAttribute<Serialisable>().Deserialise(value, fieldType));//sets the value in the instance to the deserialised value
+                                field.SetValue(instance, type.GetCustomAttribute<Serialisable>().Deserialise(value, fieldType));//sets the value in the instance to the deserialised value
                         }
 
                         value = string.Empty;
@@ -123,6 +123,11 @@ namespace KSON
         {
             Console.WriteLine("Converting to Kson text\n");
 
+            Type type = instance.GetType();
+
+            if (type.GetCustomAttribute<Serialisable>() == null)
+                throw new FieldNotSerialisable(instance.GetType().ToString());
+
             FieldInfo[] fieldValues = instance.GetType().GetFields();//all the fields in the class
 
             string parsed = "{\n";
@@ -130,9 +135,6 @@ namespace KSON
             {
                 if (!fieldValues[i].FieldType.IsValidType(true))//checks if field can be serialised or not
                     throw new InvalidTypeException(true);
-
-                if (fieldValues[i].GetCustomAttribute<Serialisable>() == null)
-                    throw new FieldNotSerialisable(fieldValues[i].Name);
 
                 if (fieldValues[i].GetValue(instance) == null)//value of null 
                 {
@@ -148,9 +150,9 @@ namespace KSON
                     for (int k = 0; k < arr.Length; k++)//loop through all the elamants and depending on the type, add them to the "value" string
                     {
                         if (k + 1 != arr.Length)//checks if a ',' should be added
-                            values += $"{fieldValues[i].GetCustomAttribute<Serialisable>().Serialise(arr[k])},";
+                            values += $"{type.GetCustomAttribute<Serialisable>().Serialise(arr[k])},";
                         else
-                            values += $"{fieldValues[i].GetCustomAttribute<Serialisable>().Serialise(arr[k])}";//adds the serialised value to the "value" string
+                            values += $"{type.GetCustomAttribute<Serialisable>().Serialise(arr[k])}";//adds the serialised value to the "value" string
                     }
                     values += "]";
 
@@ -159,7 +161,7 @@ namespace KSON
                 else
                 {
                     dynamic value = fieldValues[i].GetValue(instance);//create a dynamic value
-                    parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetCustomAttribute<Serialisable>().Serialise(value)};\n";//add the value and variable to the parsed string
+                    parsed += $"{SPACE}\"{fieldValues[i].Name}\":{type.GetCustomAttribute<Serialisable>().Serialise(value)};\n";//add the value and variable to the parsed string
                 }
             }
             parsed += "}\n";
