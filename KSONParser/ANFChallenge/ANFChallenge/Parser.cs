@@ -13,7 +13,6 @@ namespace KSON
 
         /*
         should convert ->
-        <myClass>
         {
             "x":0;
             "y":hello;
@@ -139,7 +138,6 @@ namespace KSON
             string y = "hello";
         }
         to ->
-        <myClass>
         {
             "x":0;
             "y":hello;
