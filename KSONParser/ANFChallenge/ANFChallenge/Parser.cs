@@ -25,7 +25,7 @@ namespace KSON
         }
         */
 
-        public static object FromKson<T>(string ksonString) 
+        public static object FromKson<T>(string ksonString)
         {
             Type type = typeof(T);
 
@@ -61,9 +61,8 @@ namespace KSON
                         //all of this only happens if its not currently reading a class or struct variable
                         FieldInfo field = instance.GetType().GetField(varName);
 
-                        if (!field.FieldType.IsValidType(true))//not a deserialisable type
-                            if (field.FieldType.GetCustomAttribute<Serialisable>() == null)
-                                throw new InvalidTypeException(false);
+                        if (!field.FieldType.IsValidType(true) && field.FieldType.GetCustomAttribute<Serialisable>() == null)
+                            throw new InvalidTypeException(false);
 
                         if (value == NULL)//the value is null
                         {
@@ -76,7 +75,7 @@ namespace KSON
                             {
                                 MethodInfo method = typeof(KsonParser).GetMethod(nameof(KsonParser.FromKson));
                                 MethodInfo generic = method.MakeGenericMethod(fieldType);
-                                var serialisedClass = generic.Invoke(null, new[] { value });//"creates" a new FromKson method 
+                                var serialisedClass = generic.Invoke(null, new[] { value });//"creates" a new FromKson method and calls it 
 
                                 field.SetValue(instance, serialisedClass);//sets the value of the instance
                             }
@@ -115,11 +114,11 @@ namespace KSON
 
                         value = string.Empty;
                         break;
-                    case char _char when _char.IsViableToBeSerialised() && !classOrStructVar://character can be deserialised
+                    case char c when c.IsViableToBeSerialised() && !classOrStructVar://character can be deserialised
                         if (varNameFound)//if a variable name is being read
-                            varName += _char;
+                            varName += c;
                         else//variable values are being read
-                            value += _char;
+                            value += c;
                         break;
                     default:
                         if (classOrStructVar)//if a class/struct variable is being parsed then add everything to the value
@@ -152,13 +151,12 @@ namespace KSON
                 throw new TypeNotSerialisable(type.ToString());
 
             FieldInfo[] fieldValues = instance.GetType().GetFields();//all the fields in the class
-          
-            string indentation = Indent(indent),prevIndentation = Indent(indent - 1), parsed = prevIndentation + "{\n";
+
+            string indentation = Indent(indent), prevIndentation = Indent(indent - 1); string parsed = prevIndentation + "{\n";
 
             for (int i = 0; i < fieldValues.Length; i++)//loop through all the fields
             {
-                if (!fieldValues[i].FieldType.IsValidType(true))//checks if field can be serialised or not
-                    if (fieldValues[i].FieldType.GetCustomAttribute<Serialisable>() == null)
+                if (!fieldValues[i].FieldType.IsValidType(true) && fieldValues[i].FieldType.GetCustomAttribute<Serialisable>() == null)//checks if field can be serialised or not
                         throw new InvalidTypeException(true);
 
                 if (fieldValues[i].GetValue(instance) == null)//value of null 
@@ -197,12 +195,12 @@ namespace KSON
                     }
                 }
             }
-            parsed += prevIndentation + "}" + (indent == 1 ? "" : ";") + "\n";//checks if its a nested class variable or not and adds a ';' depending on that
+            parsed += prevIndentation + "}" + (indent == 1 ? "" : ";") + "\n";//checks if its a class or struct variable or not and adds a ';' depending on that
 
             return parsed;
         }
 
-        private static string Indent(int value)//calculats indentation
+        private static string Indent(int value)//calculates indentation
         {
             string indentation = string.Empty;
             for (int i = 0; i < value; i++)
