@@ -57,7 +57,8 @@ namespace KSON
                         if (varNameFound)
                             varName = string.Empty;
                         break;
-                    case char c when c == ';' && !classOrStructVar://a complete field with variable name + value has been found, parse the value and change it in the created instance and reset "varName" and "value". all of this only happens if its not currently reading a nested class
+                    case char c when c == ';' && !classOrStructVar://a complete field with variable name + value has been found, parse the value and change it in the created instance and reset "varName" and "value". 
+                        //all of this only happens if its not currently reading a class or struct variable
                         FieldInfo field = instance.GetType().GetField(varName);
 
                         if (!field.FieldType.IsValidType(true))//not a deserialisable type
