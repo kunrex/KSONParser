@@ -126,7 +126,7 @@ namespace KSON
             Type type = instance.GetType();
 
             if (type.GetCustomAttribute<Serialisable>() == null)
-                throw new FieldNotSerialisable(instance.GetType().ToString());
+                throw new TypeNotSerialisable(instance.GetType().ToString());
 
             FieldInfo[] fieldValues = instance.GetType().GetFields();//all the fields in the class
 
