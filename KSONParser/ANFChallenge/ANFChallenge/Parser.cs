@@ -64,7 +64,7 @@ namespace KSON
                             if (field.FieldType.IsArray)//type is array
                             {
                                 Type listType = typeof(List<>).MakeGenericType(fieldType.GetElementType());
-                                dynamic list = Activator.CreateInstance(listType);//create a list of elemant type of the variable being parsed
+                                dynamic values = Activator.CreateInstance(listType);//create a list of elemant type of the variable being parsed
 
                                 string currentValue = string.Empty;
 
@@ -75,21 +75,20 @@ namespace KSON
                                         case '['://ignore
                                         case ' ':
                                             break;
-
                                         case char _charecter when _charecter.IsValidToBeDeserialised_Array()://elemant
                                             currentValue += value[k];
                                             break;
                                         case char _charecter when _charecter.DeterminesEndOfSerialisedArray()://end of the elemant, depending on the data type of the field, add respective values
-                                            list.Add(field.GetCustomAttribute<Serialisable>().Deserialise(currentValue, fieldType.GetElementType()));
+                                            values.Add(field.GetCustomAttribute<Serialisable>().Deserialise(currentValue, fieldType.GetElementType()));//adds the deserialised value to the list
                                             currentValue = string.Empty;//reset the string values
                                             break;
                                     }
 
-                                    field.SetValue(instance, list.ToArray());//assign the elemants to the variable in the created instance of type T
+                                    field.SetValue(instance, values.ToArray());//assign the elemants to the variable in the created instance of type T
                                 }
                             }
                             else
-                                field.SetValue(instance, field.GetCustomAttribute<Serialisable>().Deserialise(value, fieldType));
+                                field.SetValue(instance, field.GetCustomAttribute<Serialisable>().Deserialise(value, fieldType));//sets the value in the instance to the deserialised value
                         }
 
                         value = string.Empty;
@@ -148,10 +147,10 @@ namespace KSON
 
                     for (int k = 0; k < arr.Length; k++)//loop through all the elamants and depending on the type, add them to the "value" string
                     {
-                        if (k + 1 != arr.Length)
+                        if (k + 1 != arr.Length)//checks if a ',' should be added
                             values += $"{fieldValues[i].GetCustomAttribute<Serialisable>().Serialise(arr[k])},";
                         else
-                            values += $"{fieldValues[i].GetCustomAttribute<Serialisable>().Serialise(arr[k])}";
+                            values += $"{fieldValues[i].GetCustomAttribute<Serialisable>().Serialise(arr[k])}";//adds the serialised value to the "value" string
                     }
                     values += "]";
 
@@ -159,7 +158,7 @@ namespace KSON
                 }
                 else
                 {
-                    dynamic value = fieldValues[i].GetValue(instance);
+                    dynamic value = fieldValues[i].GetValue(instance);//create a dynamic value
                     parsed += $"{SPACE}\"{fieldValues[i].Name}\":{fieldValues[i].GetCustomAttribute<Serialisable>().Serialise(value)};\n";//add the value and variable to the parsed string
                 }
             }
