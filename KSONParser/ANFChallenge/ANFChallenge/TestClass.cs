@@ -26,6 +26,7 @@ namespace KSON
             bools = _bools;
 
             testClass = new TestClass2(_string);
+            testClass2 = new TestClass2(_nullableTest);
         }
 
         public int newInt;
@@ -39,5 +40,6 @@ namespace KSON
         public float[] floatingPoints;
         public bool[] bools;
         public TestClass2 testClass;
+        public TestClass2 testClass2;
     }
 }
