@@ -18,3 +18,77 @@ namespace KSON
         }
     }
 }
+//output =>
+/*
+{
+   "newInt":10;
+   "newString":hello;
+   "newFloat":0.5;
+   "newBool":TRUE;
+   "nullableTest":NULL;
+
+   "numbers":[1,2,3];
+
+   "words":[hello,this,be,KSON];
+
+   "floatingPoints":[1.5,2.5,3.5];
+
+   "bools":[TRUE,FALSE];
+
+   "testClass":
+   {
+      "stringValue":hello;
+
+      "class3":
+      {
+         "popertyCheck":0;
+      };
+   };
+
+   "testClass2":
+   {
+      "stringValue":NULL;
+
+      "class3":
+      {
+         "popertyCheck":0;
+      };
+   };
+}
+
+{
+   "newInt":10;
+   "newString":hello;
+   "newFloat":0.5;
+   "newBool":TRUE;
+   "nullableTest":NULL;
+
+   "numbers":[1,2,3];
+
+   "words":[hello,this,be,KSON];
+
+   "floatingPoints":[1.5,2.5,3.5];
+
+   "bools":[TRUE,FALSE];
+
+   "testClass":
+   {
+      "stringValue":hello;
+
+      "class3":
+      {
+         "popertyCheck":0;
+      };
+   };
+
+   "testClass2":
+   {
+      "stringValue":NULL;
+
+      "class3":
+      {
+         "popertyCheck":0;
+      };
+   };
+}
+*/
