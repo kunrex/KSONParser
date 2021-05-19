@@ -2,7 +2,7 @@ using System;
 
 namespace KSON
 {
-    class Program
+    static class Program
     {
         static void Main(string[] args)
         {
