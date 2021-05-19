@@ -2,7 +2,7 @@ using System;
 
 namespace HelpfulExtensions
 {
-    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public class Serialisable : Attribute
     {
         public string Serialise(int value) => value.ToString();
