@@ -33,6 +33,7 @@ namespace KSON
 
             bool varNameFound = false, classOrStructVar = false;
             string varName = string.Empty, value = string.Empty;
+            int nested = 0;//checks how many "nested" classes there are
 
             for (int i = 0; i < ksonString.Length; i++)//loop through all the characters in the entered string
             {
@@ -41,14 +42,22 @@ namespace KSON
                     case '{':
                         if (i != 0)//checks wether its the start of the parse
                         {
-                            classOrStructVar = true;
+                            if (nested == 0)
+                                classOrStructVar = true;
+
+                            nested++;
+
                             value += '{';
                         }
                         break;
                     case '}':
                         if (i != ksonString.Length - 1)// checks wether its the end of the parse
                         {
-                            classOrStructVar = false;
+                            nested--;
+
+                            if (nested == 0)
+                                classOrStructVar = false;
+
                             value += '}';
                         }
                         break;
@@ -65,9 +74,7 @@ namespace KSON
                             throw new InvalidTypeException(false);
 
                         if (value == NULL)//the value is null
-                        {
                             field.SetValue(instance, null);
-                        }
                         else
                         {
                             Type fieldType = field.FieldType;
@@ -75,12 +82,13 @@ namespace KSON
                             {
                                 MethodInfo method = typeof(KsonParser).GetMethod(nameof(KsonParser.FromKson));
                                 MethodInfo generic = method.MakeGenericMethod(fieldType);
-                                var serialisedClass = generic.Invoke(null, new[] { value });//"creates" a new FromKson method and calls it 
+                                var serialisedClass = generic.Invoke(null, new [] { value });//"creates" a new FromKson method and calls it 
 
                                 field.SetValue(instance, serialisedClass);//sets the value of the instance
                             }
                             else
                             {
+
                                 if (field.FieldType.IsArray)//type is array
                                 {
                                     Type listType = typeof(List<>).MakeGenericType(fieldType.GetElementType());
@@ -98,7 +106,7 @@ namespace KSON
                                             case char _charecter when _charecter.IsValidToBeDeserialised_Array()://elemant
                                                 currentValue += value[k];
                                                 break;
-                                            case char _charecter when _charecter.DeterminesEndOfSerialisedArray()://end of the elemant, depending on the data type of the field, add respective values
+                                            case char _charecter when _charecter.DeterminesEndOfSerialisedArray()://end of the elemant, add the value to the elemants list
                                                 values.Add(type.GetCustomAttribute<Serialisable>().Deserialise(currentValue, fieldType.GetElementType()));//adds the deserialised value to the list
                                                 currentValue = string.Empty;//reset the string values
                                                 break;
@@ -167,7 +175,7 @@ namespace KSON
 
                 if (fieldValues[i].FieldType.GetCustomAttribute<Serialisable>() != null)
                 {
-                    parsed += "\n" + SPACE + $"\"{fieldValues[i].Name}\":\n";
+                    parsed += "\n" + indentation + $"\"{fieldValues[i].Name}\":\n";
                     parsed += ToKson(fieldValues[i].GetValue(instance), indent + 1);//recursive i know
                 }
                 else
