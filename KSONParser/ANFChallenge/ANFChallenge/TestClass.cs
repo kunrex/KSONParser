@@ -4,6 +4,7 @@ using HelpfulExtensions;
 
 namespace KSON
 {
+    [Serialisable]
     public class TestClass
     {
         public TestClass()
@@ -23,17 +24,20 @@ namespace KSON
             words = _words;
             floatingPoints = _floats;
             bools = _bools;
+
+            testClass = new TestClass2(_string);
         }
 
-        [Serialisable] public int newInt;
-        [Serialisable] public string newString;
-        [Serialisable] public float newFloat;
-        [Serialisable] public bool newBool;
-        [Serialisable] public string nullableTest;
+        public int newInt;
+        public string newString;
+        public float newFloat;
+        public bool newBool;
+        public string nullableTest;
 
-        [Serialisable] public int[] numbers;
-        [Serialisable] public string[] words;
-        [Serialisable] public float[] floatingPoints;
-        [Serialisable] public bool[] bools;
+        public int[] numbers;
+        public string[] words;
+        public float[] floatingPoints;
+        public bool[] bools;
+        public TestClass2 testClass;
     }
 }
