@@ -1,4 +1,7 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
+using HelpfulExtensions;
+
 namespace KSON
 {
     public class TestClass
@@ -22,15 +25,15 @@ namespace KSON
             bools = _bools;
         }
 
-        public int newInt;
-        public string newString;
-        public float newFloat;
-        public bool newBool;
-        public string nullableTest;
+        [Serialisable] public int newInt;
+        [Serialisable] public string newString;
+        [Serialisable] public float newFloat;
+        [Serialisable] public bool newBool;
+        [Serialisable] public string nullableTest;
 
-        public int[] numbers;
-        public string[] words;
-        public float[] floatingPoints;
-        public bool[] bools;
+        [Serialisable] public int[] numbers;
+        [Serialisable] public string[] words;
+        [Serialisable] public float[] floatingPoints;
+        [Serialisable] public bool[] bools;
     }
 }
