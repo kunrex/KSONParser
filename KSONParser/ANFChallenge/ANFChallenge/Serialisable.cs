@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 
 namespace HelpfulExtensions
 {
@@ -17,10 +18,11 @@ namespace HelpfulExtensions
 
         public dynamic Deserialise(string value, Type type)
         {
-            if(!type.IsValidType(true))
-                throw new InvalidTypeException(false);
+            if (!type.IsValidType(true))
+                if(type.GetCustomAttribute<Serialisable>() == null)
+                    throw new InvalidTypeException(false);
 
-            switch(type)
+            switch (type)
             {
                 case Type t when t == typeof(int):
                     return int.Parse(value);
