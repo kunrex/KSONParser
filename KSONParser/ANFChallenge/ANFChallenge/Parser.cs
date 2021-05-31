@@ -25,35 +25,51 @@ namespace KSON
         }
         */
 
+        private enum CurrentParseType
+        {
+            varName,
+            varValue,
+            none,
+        }
+
         public static object FromKson<T>(string ksonString)
         {
             Type type = typeof(T);
 
             var instance = Activator.CreateInstance(type);//create instance of required type
 
-            bool varNameFound = false, classOrStructVar = false;
+            bool classOrStructVar = false;
             string varName = string.Empty, value = string.Empty;
             int nested = 0;//checks how many "nested" classes there are
+
+            CurrentParseType currentParseType = CurrentParseType.none;
 
             for (int i = 0; i < ksonString.Length; i++)//loop through all the characters in the entered string
             {
                 switch (ksonString[i])
                 {
                     case '{':
-                        if (i != 0)//checks wether its the start of the parse
+                        if (i != 0)//not the start
                         {
-                            if (nested == 0)
-                                classOrStructVar = true;
-
-                            nested++;
+                            if (classOrStructVar)
+                                nested++;
+                            else
+                            {
+                                if (nested == 0)
+                                {
+                                    classOrStructVar = true;
+                                    nested++;
+                                }
+                            }
 
                             value += '{';
                         }
                         break;
-                    case '}':
-                        if (i != ksonString.Length - 1)// checks wether its the end of the parse
+                    case '}'://not the end
+                        if (i != ksonString.Length - 1)
                         {
-                            nested--;
+                            if (classOrStructVar)
+                                nested--;
 
                             if (nested == 0)
                                 classOrStructVar = false;
@@ -61,12 +77,27 @@ namespace KSON
                             value += '}';
                         }
                         break;
-                    case char c when c == '"' && !classOrStructVar://checks wether or not a variable name is being detected, if not set varName to ""
-                        varNameFound = !varNameFound;
-                        if (varNameFound)
+                    case char c when c == '"'://checks wether or not a variable name is being detected, if not set varName to ""
+                        if(currentParseType == CurrentParseType.varValue || classOrStructVar)//make sure its not in a var value, if it is add it to the value string
+                        {
+                            value += c;
+                            break;
+                        }
+
+                        currentParseType = currentParseType == CurrentParseType.none ? CurrentParseType.varName : CurrentParseType.none;
+                        if (currentParseType == CurrentParseType.varName)
                             varName = string.Empty;
                         break;
-                    case char c when c == ';' && !classOrStructVar://a complete field with variable name + value has been found, parse the value and change it in the created instance and reset "varName" and "value". 
+                    case char c when c == ':':
+                        if (currentParseType == CurrentParseType.varValue || classOrStructVar)//make sure its not in a var value, if it is add it to the value string
+                        {
+                            value += c;
+                            break;
+                        }
+
+                        currentParseType = CurrentParseType.varValue;
+                        break;
+                    case char c when c == ';' && !classOrStructVar && currentParseType == CurrentParseType.varValue://a complete field with variable name + value has been found, parse the value and change it in the created instance and reset "varName" and "value". 
                         //all of this only happens if its not currently reading a class or struct variable
                         FieldInfo field = instance.GetType().GetField(varName);
 
@@ -82,7 +113,7 @@ namespace KSON
                             {
                                 MethodInfo method = typeof(KsonParser).GetMethod(nameof(KsonParser.FromKson));
                                 MethodInfo generic = method.MakeGenericMethod(fieldType);
-                                var serialisedClass = generic.Invoke(null, new [] { value });//"creates" a new FromKson method and calls it 
+                                var serialisedClass = generic.Invoke(null, new[] { value });//"creates" a new FromKson method and calls it 
 
                                 field.SetValue(instance, serialisedClass);//sets the value of the instance
                             }
@@ -121,16 +152,18 @@ namespace KSON
                         }
 
                         value = string.Empty;
+                        currentParseType = CurrentParseType.none;
                         break;
-                    case char c when c.IsViableToBeSerialised() && !classOrStructVar://character can be deserialised
-                        if (varNameFound)//if a variable name is being read
-                            varName += c;
-                        else//variable values are being read
+                    case char c://character can be deserialised
+                        if (classOrStructVar)
                             value += c;
-                        break;
-                    default:
-                        if (classOrStructVar)//if a class/struct variable is being parsed then add everything to the value
-                            value += ksonString[i];
+                        else if (!char.IsWhiteSpace(c))//if a variable name is being read
+                        {
+                            if (currentParseType == CurrentParseType.varName)
+                                varName += c;
+                            else if (currentParseType == CurrentParseType.varValue)
+                                value += c;
+                        }
                         break;
                 }
             }
@@ -187,10 +220,7 @@ namespace KSON
 
                         for (int k = 0; k < arr.Length; k++)//loop through all the elamants and depending on the type, add them to the "value" string
                         {
-                            if (k + 1 != arr.Length)//checks if a ',' should be added
-                                values += $"{type.GetCustomAttribute<Serialisable>().Serialise(arr[k])},";
-                            else
-                                values += $"{type.GetCustomAttribute<Serialisable>().Serialise(arr[k])}";//adds the serialised value to the "value" string
+                            values += $"{type.GetCustomAttribute<Serialisable>().Serialise(arr[k])}{(k + 1 == arr.Length ? "" : ",")}";//adds the serialised value to the "value" string
                         }
                         values += "]";
 
